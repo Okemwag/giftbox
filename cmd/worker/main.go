@@ -8,12 +8,12 @@ import (
 	"syscall"
 
 	"github.com/Okemwag/giftbox/internal/outbox"
-	"github.com/Okemwag/giftbox/internal/platform"
+	"github.com/Okemwag/giftbox/internal/platform/config"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	cfg := platform.LoadConfig()
+	cfg := config.LoadConfig()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

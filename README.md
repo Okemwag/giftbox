@@ -170,46 +170,56 @@ The system is built around these principles:
 .
 ├── cmd/
 │   ├── api/
-│   ├── migrations/
+│   ├── migrate/
 │   ├── webhook-gateway/
 │   └── worker/
 ├── internal/
 │   ├── analytics/
+│   ├── app/
 │   ├── audit/
 │   ├── auth/
+│   ├── branches/
 │   ├── campaigns/
 │   ├── consent/
 │   ├── customers/
+│   ├── experimentation/
+│   ├── identity/
+│   ├── jobs/
 │   ├── loyalty/
 │   ├── mpesa/
 │   ├── notifications/
 │   ├── outbox/
 │   ├── platform/
+│   ├── rbac/
 │   ├── rewards/
 │   ├── segments/
+│   ├── shared/
 │   ├── tenants/
+│   ├── tiers/
 │   ├── transactions/
 │   └── whatsapp/
-├── pkg/
-│   ├── database/
-│   ├── encryption/
-│   ├── logging/
-│   ├── middleware/
-│   ├── observability/
-│   └── validation/
+├── db/
+│   ├── migrations/
+│   ├── queries/
+│   ├── seeds/
+│   └── sqlc/
 ├── web/
 │   └── merchant-dashboard/
-├── migrations/
 ├── deployments/
 │   ├── docker/
 │   └── terraform/
 ├── api/
+│   ├── generated/
 │   └── openapi.yaml
 └── tests/
     ├── contract/
     ├── e2e/
+    ├── fixtures/
+    ├── helpers/
     └── integration/
 ```
+
+All application-specific business logic lives under `internal/`. The repository intentionally avoids a public `pkg/` directory until there is a real external package or SDK that another Go module should import.
 
 ## Deployable Applications
 
@@ -276,34 +286,43 @@ go run ./cmd/worker
 
 ### Migrations
 
-Path: [`cmd/migrations`](./cmd/migrations)
+Path: [`cmd/migrate`](./cmd/migrate)
 
-Migration runner entrypoint. The scaffold currently validates configuration; it will later be connected to the selected migration library.
+Migration runner entrypoint backed by Goose.
 
 ```sh
-DATABASE_DSN=postgres://user:pass@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrations
+DATABASE_DSN=postgres://user:pass@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate status
+DATABASE_DSN=postgres://user:pass@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate up
 ```
 
 ## Core Domain Modules
 
 | Module | Purpose |
 | --- | --- |
+| `internal/app` | Application construction and deployable wiring |
 | `internal/auth` | Merchant authentication integration and session-facing routes |
+| `internal/rbac` | Roles, permissions, and authorization policy |
 | `internal/tenants` | Merchant tenants, branches, staff membership, roles |
+| `internal/branches` | Merchant branches, outlets, branch-specific access, and reporting |
 | `internal/customers` | Customer profiles, identities, memberships, merge rules |
+| `internal/identity` | Phone, WhatsApp, QR, email, and POS identity matching |
 | `internal/consent` | Consent purposes, opt-ins, opt-outs, history |
 | `internal/transactions` | Purchases, refunds, imports, reconciliation state |
 | `internal/mpesa` | Daraja credentials, callbacks, normalization, reconciliation |
 | `internal/whatsapp` | WhatsApp messages, templates, inbound commands, delivery callbacks |
 | `internal/loyalty` | Programs, rules, memberships, tiers, points ledger |
 | `internal/rewards` | Reward catalogue, issuance, redemption, expiry |
+| `internal/tiers` | VIP tier thresholds, upgrades, downgrades, and tier events |
 | `internal/campaigns` | Campaign definitions, workflows, control groups, outcomes |
+| `internal/experimentation` | Holdout groups, treatment allocation, and lift measurement |
 | `internal/segments` | Audience selection and customer grouping |
 | `internal/analytics` | Retention, campaign, revenue, and reward liability reporting |
 | `internal/notifications` | Notification orchestration across customer and merchant channels |
 | `internal/audit` | Immutable administrative and security event history |
 | `internal/outbox` | Transactional outbox and reliable async event delivery |
-| `internal/platform` | Shared application wiring, configuration, route registration |
+| `internal/jobs` | Scheduled operational jobs such as reconciliation and expiry |
+| `internal/platform` | Infrastructure implementations such as config, database, server, observability, cache, storage, and Temporal wiring |
+| `internal/shared` | Small internal primitives such as money, validation, pagination, secure tokens, and typed errors |
 
 ## Technology Direction
 
@@ -526,6 +545,29 @@ tenant_id + transaction_id + loyalty_rule_version + ledger_action
 ```
 
 Every reward issuance must reference the triggering event.
+
+## Migrations
+
+Giftbox uses Goose for database migrations. Migration files live in [`db/migrations`](./db/migrations) and follow Goose's annotated SQL format:
+
+```sql
+-- +goose Up
+CREATE TABLE example_records (
+    id TEXT PRIMARY KEY
+);
+
+-- +goose Down
+DROP TABLE IF EXISTS example_records;
+```
+
+Run migrations through the project command:
+
+```sh
+DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate status
+DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate up
+```
+
+See [`docs/migrations.md`](./docs/migrations.md) for the migration conventions and supported commands.
 
 ## Event-Driven Processing
 

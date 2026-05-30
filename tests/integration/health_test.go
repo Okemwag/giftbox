@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Okemwag/giftbox/pkg/observability"
+	"github.com/Okemwag/giftbox/internal/platform/observability"
 )
 
 func TestHealthEndpoint(t *testing.T) {

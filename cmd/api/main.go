@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Okemwag/giftbox/internal/analytics"
+	"github.com/Okemwag/giftbox/internal/app"
 	"github.com/Okemwag/giftbox/internal/audit"
 	"github.com/Okemwag/giftbox/internal/auth"
 	"github.com/Okemwag/giftbox/internal/campaigns"
@@ -15,7 +16,7 @@ import (
 	"github.com/Okemwag/giftbox/internal/mpesa"
 	"github.com/Okemwag/giftbox/internal/notifications"
 	"github.com/Okemwag/giftbox/internal/outbox"
-	"github.com/Okemwag/giftbox/internal/platform"
+	"github.com/Okemwag/giftbox/internal/platform/config"
 	"github.com/Okemwag/giftbox/internal/rewards"
 	"github.com/Okemwag/giftbox/internal/segments"
 	"github.com/Okemwag/giftbox/internal/tenants"
@@ -25,10 +26,10 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	cfg := platform.LoadConfig()
+	cfg := config.LoadConfig()
 
-	app := platform.NewApplication(cfg, logger)
-	app.Register(
+	application := app.NewApplication(cfg, logger)
+	application.Register(
 		auth.RegisterRoutes,
 		tenants.RegisterRoutes,
 		customers.RegisterRoutes,
@@ -46,7 +47,7 @@ func main() {
 		outbox.RegisterRoutes,
 	)
 
-	if err := app.Serve(context.Background(), cfg.HTTPAddr); err != nil {
+	if err := application.Serve(context.Background(), cfg.HTTPAddr); err != nil {
 		logger.Error("api stopped", "error", err)
 		os.Exit(1)
 	}
