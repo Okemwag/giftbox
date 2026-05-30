@@ -46,12 +46,12 @@ $$ LANGUAGE plpgsql;
 
 ## Running Migrations
 
-Set `DATABASE_DSN`, then run the migration command:
+Set the platform configuration, then run the migration command:
 
 ```sh
-DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate status
-DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate up
-DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate down
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate status
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate up
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate down
 ```
 
 Supported commands:

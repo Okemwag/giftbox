@@ -3,6 +3,8 @@ package server
 import (
 	"log/slog"
 	"net/http"
+
+	apperrors "github.com/Okemwag/giftbox/internal/shared/errors"
 )
 
 func Recoverer(logger *slog.Logger) Middleware {
@@ -11,7 +13,7 @@ func Recoverer(logger *slog.Logger) Middleware {
 			defer func() {
 				if recovered := recover(); recovered != nil {
 					logger.Error("panic recovered", "panic", recovered, "path", r.URL.Path)
-					http.Error(w, "internal server error", http.StatusInternalServerError)
+					WriteError(w, apperrors.New(apperrors.CodeInternal, "internal server error"))
 				}
 			}()
 			next.ServeHTTP(w, r)

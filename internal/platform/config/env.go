@@ -1,3 +1,10 @@
 package config
 
-// Environment parsing helpers belong here.
+import "os"
+
+func env(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/Okemwag/giftbox/internal/analytics"
 	"github.com/Okemwag/giftbox/internal/app"
@@ -17,6 +18,7 @@ import (
 	"github.com/Okemwag/giftbox/internal/notifications"
 	"github.com/Okemwag/giftbox/internal/outbox"
 	"github.com/Okemwag/giftbox/internal/platform/config"
+	"github.com/Okemwag/giftbox/internal/platform/database"
 	"github.com/Okemwag/giftbox/internal/rewards"
 	"github.com/Okemwag/giftbox/internal/segments"
 	"github.com/Okemwag/giftbox/internal/tenants"
@@ -26,9 +28,32 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	cfg := config.LoadConfig()
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Error("invalid configuration", "error", err)
+		os.Exit(1)
+	}
 
-	application := app.NewApplication(cfg, logger)
+	startupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db, err := database.Open(startupCtx, database.Config{
+		DatabaseURL:     cfg.DatabaseURL,
+		MaxConns:        10,
+		MinConns:        1,
+		MaxConnLifetime: time.Hour,
+	})
+	if err != nil {
+		logger.Error("database startup failed", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	application := app.NewApplication(app.Dependencies{
+		Config: cfg,
+		DB:     db,
+		Logger: logger,
+	})
 	application.Register(
 		auth.RegisterRoutes,
 		tenants.RegisterRoutes,
@@ -47,7 +72,7 @@ func main() {
 		outbox.RegisterRoutes,
 	)
 
-	if err := application.Serve(context.Background(), cfg.HTTPAddr); err != nil {
+	if err := application.Serve(context.Background(), cfg.HTTPAddr()); err != nil {
 		logger.Error("api stopped", "error", err)
 		os.Exit(1)
 	}

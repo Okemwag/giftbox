@@ -16,6 +16,13 @@ func (r *statusRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 }
 
+func (r *statusRecorder) Write(payload []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(payload)
+}
+
 func AccessLog(logger *slog.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +33,7 @@ func AccessLog(logger *slog.Logger) Middleware {
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", recorder.status,
+				"request_id", RequestIDFromContext(r.Context()),
 				"duration", time.Since(start).String(),
 			)
 		})

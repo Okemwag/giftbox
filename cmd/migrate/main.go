@@ -19,9 +19,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	cfg := config.LoadConfig()
-	if cfg.DatabaseDSN == "" {
-		fmt.Fprintln(os.Stderr, "DATABASE_DSN is required to run migrations")
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "invalid configuration: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -30,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := sql.Open("pgx", cfg.DatabaseDSN)
+	db, err := sql.Open("pgx", cfg.DatabaseURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open database: %v\n", err)
 		os.Exit(1)

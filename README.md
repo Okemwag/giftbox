@@ -291,8 +291,8 @@ Path: [`cmd/migrate`](./cmd/migrate)
 Migration runner entrypoint backed by Goose.
 
 ```sh
-DATABASE_DSN=postgres://user:pass@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate status
-DATABASE_DSN=postgres://user:pass@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate up
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://user:pass@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate status
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://user:pass@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate up
 ```
 
 ## Core Domain Modules
@@ -416,10 +416,12 @@ Redis, Temporal dev server, and dashboard services will be added as the platform
 | Variable | Default | Description |
 | --- | --- | --- |
 | `APP_ENV` | `local` | Runtime environment name |
-| `HTTP_ADDR` | `:8080` | API listen address |
-| `WEBHOOK_ADDR` | `:8081` | Webhook gateway listen address |
-| `DATABASE_DSN` | empty | PostgreSQL connection string |
-| `WORKER_POLL_INTERVAL` | `5s` | Worker polling interval |
+| `HTTP_PORT` | `8080` | HTTP listen port |
+| `DATABASE_URL` | empty | PostgreSQL connection string |
+| `APP_BASE_URL` | `http://localhost:8080` | Public application base URL |
+| `JWT_ISSUER` | empty | Expected JWT issuer URL |
+| `JWT_AUDIENCE` | empty | Expected JWT audience |
+| `LOG_LEVEL` | `info` | Structured log level |
 
 Future configuration groups:
 
@@ -563,8 +565,8 @@ DROP TABLE IF EXISTS example_records;
 Run migrations through the project command:
 
 ```sh
-DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate status
-DATABASE_DSN=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable go run ./cmd/migrate up
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate status
+APP_ENV=local HTTP_PORT=8080 DATABASE_URL=postgres://giftbox:giftbox@localhost:5432/giftbox?sslmode=disable APP_BASE_URL=http://localhost:8080 JWT_ISSUER=http://localhost:8080 JWT_AUDIENCE=giftbox-api go run ./cmd/migrate up
 ```
 
 See [`docs/migrations.md`](./docs/migrations.md) for the migration conventions and supported commands.

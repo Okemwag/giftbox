@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Okemwag/giftbox/internal/platform/config"
-	"github.com/Okemwag/giftbox/internal/platform/observability"
 	"github.com/Okemwag/giftbox/internal/platform/server"
 )
 
@@ -16,17 +15,19 @@ type RouteRegistrar func(*http.ServeMux)
 
 type Application struct {
 	config config.Config
+	deps   Dependencies
 	logger *slog.Logger
 	mux    *http.ServeMux
 }
 
-func NewApplication(cfg config.Config, logger *slog.Logger) *Application {
+func NewApplication(deps Dependencies) *Application {
 	mux := http.NewServeMux()
-	observability.RegisterRoutes(mux)
+	registerHealthRoutes(mux, deps)
 
 	return &Application{
-		config: cfg,
-		logger: logger,
+		config: deps.Config,
+		deps:   deps,
+		logger: deps.Logger,
 		mux:    mux,
 	}
 }
@@ -41,15 +42,14 @@ func (a *Application) Serve(ctx context.Context, addr string) error {
 	handler := server.Chain(
 		a.mux,
 		server.RequestID,
+		server.CORS,
+		server.JSONContentType,
+		server.Timeout(30*time.Second),
 		server.Recoverer(a.logger),
 		server.AccessLog(a.logger),
 	)
 
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           handler,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
+	srv := server.NewHTTPServer(addr, handler)
 
 	errs := make(chan error, 1)
 	go func() {
@@ -59,9 +59,7 @@ func (a *Application) Serve(ctx context.Context, addr string) error {
 
 	select {
 	case <-ctx.Done():
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		return srv.Shutdown(shutdownCtx)
+		return server.Shutdown(context.Background(), srv)
 	case err := <-errs:
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil

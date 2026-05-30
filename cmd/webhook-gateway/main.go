@@ -13,15 +13,19 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	cfg := config.LoadConfig()
-	if cfg.WebhookAddr == "" {
-		cfg.WebhookAddr = ":8081"
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Error("invalid configuration", "error", err)
+		os.Exit(1)
 	}
 
-	application := app.NewApplication(cfg, logger)
+	application := app.NewApplication(app.Dependencies{
+		Config: cfg,
+		Logger: logger,
+	})
 	application.Register(mpesa.RegisterWebhookRoutes, whatsapp.RegisterWebhookRoutes)
 
-	if err := application.Serve(context.Background(), cfg.WebhookAddr); err != nil {
+	if err := application.Serve(context.Background(), cfg.HTTPAddr()); err != nil {
 		logger.Error("webhook gateway stopped", "error", err)
 		os.Exit(1)
 	}

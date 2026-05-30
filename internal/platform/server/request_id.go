@@ -21,6 +21,11 @@ func RequestID(next http.Handler) http.Handler {
 	})
 }
 
+func RequestIDFromContext(ctx context.Context) string {
+	requestID, _ := ctx.Value(requestIDKey{}).(string)
+	return requestID
+}
+
 func newRequestID() string {
 	var buf [16]byte
 	if _, err := rand.Read(buf[:]); err != nil {
