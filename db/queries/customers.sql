@@ -1,0 +1,1 @@
+-- Customer queries will be defined here for sqlc.

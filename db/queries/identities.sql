@@ -1,0 +1,1 @@
+-- Identity queries will be defined here for sqlc.

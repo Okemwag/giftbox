@@ -1,0 +1,1 @@
+-- Demo merchant seed data will be defined here.

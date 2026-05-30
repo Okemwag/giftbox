@@ -1,0 +1,1 @@
+-- Segment queries will be defined here for sqlc.

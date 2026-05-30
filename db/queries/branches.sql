@@ -1,0 +1,1 @@
+-- Branch queries will be defined here for sqlc.
