@@ -1,0 +1,65 @@
+openapi: 3.1.0
+info:
+  title: Giftbox Loyalty Platform API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+  /v1/customers:
+    get:
+      summary: Search customers
+      responses:
+        "200":
+          description: Customer list
+    post:
+      summary: Register customer
+      responses:
+        "201":
+          description: Customer created
+  /v1/transactions:
+    get:
+      summary: List transactions
+      responses:
+        "200":
+          description: Transaction list
+    post:
+      summary: Record transaction
+      responses:
+        "202":
+          description: Transaction accepted
+  /v1/loyalty/customers/{customer_id}/balance:
+    get:
+      summary: Fetch loyalty balance
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Loyalty balance
+  /v1/webhooks/mpesa/c2b:
+    post:
+      summary: Receive M-Pesa C2B callback
+      responses:
+        "202":
+          description: Callback accepted
+  /v1/webhooks/whatsapp/messages:
+    post:
+      summary: Receive WhatsApp callback
+      responses:
+        "202":
+          description: Callback accepted
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
